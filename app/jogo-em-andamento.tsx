@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { StyleSheet, TouchableOpacity, Modal, Alert, Dimensions, View, Text } from "react-native"
+import { StyleSheet, TouchableOpacity, Alert, Dimensions, View, Text } from "react-native"
 import { Stack, router, useLocalSearchParams } from "expo-router"
 
 import { ThemedText } from "@/components/ThemedText"
@@ -22,7 +22,7 @@ export default function JogoEmAndamentoScreen() {
   const maxKicks = Number(params.kicks || 2)
   const startingPlayerIndex = Number(params.startingPlayer || 0)
 
-  const [timeRemaining, setTimeRemaining] = useState(gameTime * 60) // em segundos
+  const [timeRemaining, setTimeRemaining] = useState(gameTime * 60) // in seconds
   const [isPaused, setIsPaused] = useState(false)
   const [kickCount, setKickCount] = useState(0)
   const [isGameOver, setIsGameOver] = useState(false)
@@ -40,7 +40,7 @@ export default function JogoEmAndamentoScreen() {
         clearInterval(timerRef.current)
       }
     }
-  }, [isPaused]) // Adicionar isPaused como dependência para reiniciar o timer quando mudar
+  }, [isPaused]) // restart the timer when pause state changes
 
   const startTimer = () => {
     if (timerRef.current) {
@@ -51,7 +51,7 @@ export default function JogoEmAndamentoScreen() {
       if (!isPaused) {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
-            // Tempo acabou, espião vence
+            // Time is up, spy wins
             endGame("spy")
             return 0
           }
@@ -65,27 +65,38 @@ export default function JogoEmAndamentoScreen() {
     setIsPaused((prev) => !prev)
   }
 
+  // Modified handleKick:
   const handleKick = () => {
-    if (kickCount >= maxKicks - 1) {
-      // Último kick disponível
-      Alert.alert("Último Kick", "Este é o último kick disponível. Se não acertarem o espião, os moradores perdem.", [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Confirmar",
-          onPress: () => {
-            const newKickCount = kickCount + 1
-            setKickCount(newKickCount)
+    const isLastKick = kickCount >= maxKicks - 1
+    const title = isLastKick ? "Último Chute" : "Chute"
+    const message = isLastKick
+      ? "Este é o último chute disponível. Se não acertarem o espião, os moradores perdem. \n O espião foi descoberto?"
+      : "O espião foi descoberto?"
 
-            if (newKickCount >= maxKicks) {
-              // Moradores perderam por usar todos os kicks
-              endGame("spy")
-            }
-          },
+    Alert.alert(title, message, [
+      {text: "Cancelar"},
+      {
+        text: "Sim",
+        onPress: () => {
+          // Spy discovered: villagers win.
+          endGame("villagers")
         },
-      ])
-    } else {
-      setKickCount((prev) => prev + 1)
-    }
+      },
+      {
+        text: "Não",
+        onPress: () => {
+          if (isLastKick) {
+            // On the last kick, if spy is not discovered, spy wins.
+            endGame("spy")
+          } else {
+            // Not the last kick: increment kick count for another attempt.
+            setKickCount((prev) => prev + 1)
+          }
+        },
+        style: "cancel",
+      },
+      
+    ])
   }
 
   const endGame = (winner: "spy" | "villagers") => {
@@ -105,7 +116,7 @@ export default function JogoEmAndamentoScreen() {
     endGame(winner)
     setShowEndGameModal(false)
 
-    // Navegar para a tela de resultados
+    // Navigate to results screen
     router.push({
       pathname: "/fim-de-jogo",
       params: {
@@ -160,13 +171,15 @@ export default function JogoEmAndamentoScreen() {
         <Timer time={timeRemaining} isPaused={isPaused} maxTime={gameTime * 60} />
 
         <TouchableOpacity style={styles.pauseButton} onPress={togglePause}>
-          <ThemedText style={styles.pauseButtonText}>{isPaused ? "Continuar" : "Pausar"}</ThemedText>
+          <ThemedText style={styles.pauseButtonText}>
+            {isPaused ? "Continuar" : "Pausar"}
+          </ThemedText>
         </TouchableOpacity>
       </ThemedView>
 
       <ThemedView style={styles.infoContainer}>
         <ThemedText style={styles.infoText}>
-          Kicks: {kickCount}/{maxKicks}
+          Chutes: {kickCount}/{maxKicks}
         </ThemedText>
 
         <TouchableOpacity
@@ -174,7 +187,9 @@ export default function JogoEmAndamentoScreen() {
           onPress={handleKick}
           disabled={kickCount >= maxKicks}
         >
-          <ThemedText style={[styles.kickButtonText, { color: Colors[colorScheme].tint }]}>Usar Kick</ThemedText>
+          <ThemedText style={[styles.kickButtonText, { color: Colors[colorScheme].tint }]}>
+            Usar Chute
+          </ThemedText>
         </TouchableOpacity>
       </ThemedView>
 
@@ -192,121 +207,40 @@ export default function JogoEmAndamentoScreen() {
         <ThemedText style={styles.buttonText}>Finalizar Jogo</ThemedText>
       </TouchableOpacity>
 
-      <Modal visible={showEndGameModal} transparent={true} animationType="fade" onRequestClose={handleCancelEndGame}>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          <View
-            style={{
-              width: "80%",
-              backgroundColor: "white",
-              borderRadius: 10,
-              padding: 20,
-              alignItems: "center",
-              maxWidth: 300,
-            }}
-          >
-            <ThemedText
-              type="subtitle"
-              style={{
-                marginBottom: 20,
-                color: "#3b508f",
-                fontWeight: "bold",
-                fontSize: 20,
-              }}
-            >
+      {showEndGameModal && (
+        <View style={styles.overlay}>
+          <View style={styles.modalContent}>
+            <ThemedText type="subtitle" style={styles.modalTitle}>
               Finalizar Jogo
             </ThemedText>
 
-            <ThemedText
-              style={{
-                marginBottom: 20,
-                textAlign: "center",
-                color: "#333",
-                fontSize: 16,
-              }}
-            >
+            <ThemedText style={styles.modalText}>
               Quem venceu o jogo?
             </ThemedText>
 
             <TouchableOpacity
-              style={{
-                backgroundColor: "#2ecc71",
-                paddingVertical: 12,
-                paddingHorizontal: 20,
-                borderRadius: 8,
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                marginBottom: 10,
-              }}
+              style={[styles.modalButton, { backgroundColor: "#2ecc71" }]}
               onPress={() => handleConfirmEndGame("villagers")}
             >
-              <Text
-                style={{
-                  color: "white",
-                  fontSize: 16,
-                  fontWeight: "bold",
-                }}
-              >
-                Moradores Venceram
-              </Text>
+              <Text style={styles.modalButtonText}>Moradores Venceram</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={{
-                backgroundColor: "#e74c3c",
-                paddingVertical: 12,
-                paddingHorizontal: 20,
-                borderRadius: 8,
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                marginBottom: 10,
-              }}
+              style={[styles.modalButton, { backgroundColor: "#e74c3c" }]}
               onPress={() => handleConfirmEndGame("spy")}
             >
-              <Text
-                style={{
-                  color: "white",
-                  fontSize: 16,
-                  fontWeight: "bold",
-                }}
-              >
-                Espião Venceu
-              </Text>
+              <Text style={styles.modalButtonText}>Espião Venceu</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={{
-                backgroundColor: "#7f8c8d",
-                paddingVertical: 12,
-                paddingHorizontal: 20,
-                borderRadius: 8,
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-              }}
+              style={[styles.modalButton, { backgroundColor: "#7f8c8d" }]}
               onPress={handleCancelEndGame}
             >
-              <Text
-                style={{
-                  color: "white",
-                  fontSize: 16,
-                  fontWeight: "bold",
-                }}
-              >
-                Cancelar
-              </Text>
+              <Text style={styles.modalButtonText}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      )}
     </ThemedView>
   )
 }
@@ -400,28 +334,38 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 300,
   },
-  modalOverlay: {
-    flex: 1,
+  // Overlay styles replacing Modal
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 10,
   },
   modalContent: {
     width: "80%",
-    padding: 20,
+    maxWidth: 300,
+    backgroundColor: "white",
     borderRadius: 10,
+    padding: 20,
     alignItems: "center",
-    backgroundColor: "#3b508f",
-    maxWidth: Dimensions.get("window").width * 0.8,
   },
   modalTitle: {
     marginBottom: 20,
-    color: "white",
+    color: "#3b508f",
+    fontWeight: "bold",
+    fontSize: 20,
+    textAlign: "center",
   },
   modalText: {
     marginBottom: 20,
     textAlign: "center",
-    color: "white",
+    color: "#333",
+    fontSize: 16,
   },
   modalButton: {
     paddingVertical: 12,
@@ -431,5 +375,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "100%",
     marginBottom: 10,
+  },
+  modalButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 })

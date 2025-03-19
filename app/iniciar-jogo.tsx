@@ -164,7 +164,7 @@ export default function IniciarJogoScreen() {
 
           {players[currentPlayerIndex].role === "spy" && (
             <ThemedView style={styles.locationContainer}>
-              <ThemedText type="subtitle">Não deixe os aldeões descobrir que você é o Espião!</ThemedText>
+              <ThemedText style={styles.instructionText} type="subtitle">Não deixe os aldeões descobrir que você é o Espião!</ThemedText>
             </ThemedView>
           )}
 
@@ -232,6 +232,7 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 24,
     marginTop: 10,
+    textAlign: "center",
   },
   button: {
     paddingVertical: 15,
