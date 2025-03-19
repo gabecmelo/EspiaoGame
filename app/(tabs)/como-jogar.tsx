@@ -8,7 +8,7 @@ export default function ComoJogarScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <ThemedText type="title" style={styles.title}>
+        <ThemedText  type="title" style={styles.title}>
           Como Jogar
         </ThemedText>
 
@@ -19,11 +19,11 @@ export default function ComoJogarScreen() {
 
         <Collapsible title="Objetivo do Jogo">
           <ThemedText style={styles.paragraph}>
-            <ThemedText type="defaultSemiBold">Para os Moradores:</ThemedText> Descobrir quem é o espião antes que o
+            <ThemedText style={styles.paragraphTitle} type="defaultSemiBold">Para os Moradores:</ThemedText> Descobrir quem é o espião antes que o
             tempo acabe ou antes de usar todos os kicks disponíveis.
           </ThemedText>
           <ThemedText style={styles.paragraph}>
-            <ThemedText type="defaultSemiBold">Para o Espião:</ThemedText> Descobrir qual é o local sem ser identificado
+            <ThemedText style={styles.paragraphTitle} type="defaultSemiBold">Para o Espião:</ThemedText> Descobrir qual é o local sem ser identificado
             pelos outros jogadores, ou sobreviver até o tempo acabar.
           </ThemedText>
         </Collapsible>
@@ -76,6 +76,7 @@ export default function ComoJogarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#3b508f",
   },
   scrollView: {
     flex: 1,
@@ -87,10 +88,15 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 20,
     textAlign: "center",
+    color: "#f2e377"
   },
   paragraph: {
     marginBottom: 10,
     lineHeight: 24,
+    color: "white",
   },
+  paragraphTitle: {
+    color: "#f2e377"
+  }
 })
 
